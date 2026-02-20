@@ -1,18 +1,28 @@
 var commands = [];
 var replyHandlers = [];
 
-function cmd(info, func) {
-    const data = info;
+function cmd(info = {}, func = () => {}) {
+    const data = { ...info };
+
     data.function = func;
 
     // Default fields
-    if (!data.dontAddCommandList) data.dontAddCommandList = false;
-    if (!data.desc) data.desc = '';
-    if (!data.category) data.category = 'misc';
-    if (!data.filename) data.filename = "Not Provided";
-    if (!data.fromMe) data.fromMe = false;
+    data.dontAddCommandList = data.dontAddCommandList ?? false;
+    data.desc = data.desc ?? '';
+    data.category = data.category ?? 'misc';
+    data.filename = data.filename ?? "Not Provided";
+    data.fromMe = data.fromMe ?? false;
 
-    // Register reply-based handler if no pattern and has filter
+    // Prevent duplicate pattern registration
+    if (data.pattern) {
+        const exists = commands.find(c => c.pattern === data.pattern);
+        if (exists) {
+            console.warn(`⚠️ Command "${data.pattern}" already registered — skipping`);
+            return;
+        }
+    }
+
+    // Register reply handler
     if (!data.pattern && typeof data.filter === "function") {
         replyHandlers.push(data);
     } else {
