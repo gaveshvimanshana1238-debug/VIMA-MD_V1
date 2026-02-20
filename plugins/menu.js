@@ -3,44 +3,39 @@ const { cmd, commands } = require("../command");
 cmd(
   {
     pattern: "menu",
-    desc: "Displays all available commands",
+    desc: "Show all VIMA-MD commands",
     category: "main",
     filename: __filename,
   },
-  async (
-    danuwa,
-    mek,
-    m,
-    {
-      from,
-      reply
-    }
-  ) => {
+  async (conn, mek, m, { reply }) => {
     try {
       const categories = {};
 
-      for (let cmdName in commands) {
-        const cmdData = commands[cmdName];
-        const cat = cmdData.category?.toLowerCase() || "other";
+      for (const command of commands) {
+        if (!command.pattern) continue;
+
+        const cat = command.category?.toLowerCase() || "other";
+
         if (!categories[cat]) categories[cat] = [];
+
         categories[cat].push({
-          pattern: cmdData.pattern,
-          desc: cmdData.desc || "No description"
+          pattern: command.pattern,
+          desc: command.desc || "No description",
         });
       }
 
-      let menuText = "📋 *Available Commands:*\n";
+      let menuText = `🤖 *VIMA-MD COMMAND MENU*\n`;
 
       for (const [cat, cmds] of Object.entries(categories)) {
         menuText += `\n📂 *${cat.toUpperCase()}*\n`;
         cmds.forEach(c => {
-          menuText += `- .${c.pattern} : ${c.desc}\n`;
+          menuText += `• .${c.pattern} — ${c.desc}\n`;
         });
       }
 
       await reply(menuText.trim());
     } catch (err) {
-      console.error(err);
+      console.error("Menu error:", err);
       reply("❌ Error generating menu.");
     }
   }
