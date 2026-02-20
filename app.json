@@ -1,31 +1,32 @@
 {
-  "name": "DANUWA-MD",
-  "description": "Javascript WhatsApp bot made by Danuka Dissanayake",
-  "logo": "https://github.com/DANUWA-MD/DANUWA-MD/blob/main/images/DANUWA-MD.png?raw=true",
-  "keywords": ["DANUWA-MD"],
+  "name": "VIMA-MD",
+  "description": "Javascript WhatsApp bot made for Gaveshv imanshana ",
+  "logo": "https://raw.githubusercontent.com/gaveshvimanshana126-cyber/VIMA-MD/main/Image/20260218_134730.jpg",
+  "keywords": ["VIMA-MD", "whatsapp-bot"],
   "success_url": "/",
 
   "env": {
     "SESSION_ID": {
       "description": "Put the session-id here.",
       "required": true
-    },  
+    },
 
     "ALIVE_IMG": {
-      "description": "Put your alive img here.",
+      "description": "Put your alive image URL.",
       "required": true
     },
-    
-    "ALIVE_MSG": {
-      "description": "Put your alive msg here.",
-      "required": true
-    }   
-},
 
-     "buildpacks": [
-        {
-            "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
-        }
-     ],
+    "ALIVE_MSG": {
+      "description": "Put your alive message.",
+      "required": true
+    }
+  },
+
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
+    }
+  ],
+
   "stack": "heroku-24"
 }
