@@ -11,15 +11,11 @@ const {
 const fs = require('fs');
 const P = require('pino');
 const express = require('express');
-const axios = require('axios');
 const path = require('path');
-const qrcode = require('qrcode-terminal');
 
 const config = require('./config');
-const { sms, downloadMediaMessage } = require('./lib/msg');
-const {
-  getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson
-} = require('./lib/functions');
+const { sms } = require('./lib/msg');
+const { getGroupAdmins } = require('./lib/functions');
 const { File } = require('megajs');
 const { commands, replyHandlers } = require('./command');
 
@@ -27,31 +23,30 @@ const app = express();
 const port = process.env.PORT || 8000;
 
 const prefix = '.';
-const ownerNumber = ['94776121326'];
+const ownerNumber = [config.BOT_OWNER];
 const credsPath = path.join(__dirname, '/auth_info_baileys/creds.json');
 
 async function ensureSessionFile() {
   if (!fs.existsSync(credsPath)) {
     if (!config.SESSION_ID) {
-      console.error('❌ SESSION_ID env variable is missing.');
+      console.error('❌ SESSION_ID missing.');
       process.exit(1);
     }
 
-    console.log("🔄 creds.json not found. Downloading session from MEGA...");
+    console.log("🔄 Downloading session...");
 
-    const sessdata = config.SESSION_ID;
-    const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
+    const filer = File.fromURL(`https://mega.nz/file/${config.SESSION_ID}`);
 
     filer.download((err, data) => {
       if (err) {
-        console.error("❌ Failed to download session:", err);
+        console.error("❌ Session download failed:", err);
         process.exit(1);
       }
 
       fs.mkdirSync(path.join(__dirname, '/auth_info_baileys/'), { recursive: true });
       fs.writeFileSync(credsPath, data);
 
-      console.log("✅ Session downloaded. Starting VIMA-MD...");
+      console.log("✅ Session ready. Starting VIMA-MD...");
       setTimeout(connectToWA, 2000);
     });
   } else {
@@ -80,23 +75,29 @@ async function connectToWA() {
     const { connection, lastDisconnect } = update;
 
     if (connection === 'close') {
-      if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+      const code = lastDisconnect?.error?.output?.statusCode;
+      if (code !== DisconnectReason.loggedOut) {
+        console.log("♻️ Reconnecting...");
         connectToWA();
       }
-    } else if (connection === 'open') {
-      console.log('✅ VIMA-MD connected to WhatsApp');
+    }
 
-      const up = `VIMA-MD connected ✅\n\nPREFIX: ${prefix}`;
+    if (connection === 'open') {
+      console.log('✅ VIMA-MD connected');
+
+      const msg = `VIMA-MD connected ✅\n\nPREFIX: ${prefix}`;
       await vima.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
-        image: { url: `https://raw.githubusercontent.com/gaveshvimanshana126-cyber/VIMA-MD/main/Image/20260218_134730.jpg` },
-        caption: up
+        image: { url: config.ALIVE_IMG },
+        caption: msg
       });
 
-      fs.readdirSync("./plugins/").forEach((plugin) => {
-        if (path.extname(plugin).toLowerCase() === ".js") {
-          require(`./plugins/${plugin}`);
-        }
-      });
+      if (fs.existsSync("./plugins/")) {
+        fs.readdirSync("./plugins/").forEach((plugin) => {
+          if (plugin.endsWith(".js")) {
+            require(`./plugins/${plugin}`);
+          }
+        });
+      }
     }
   });
 
@@ -104,7 +105,7 @@ async function connectToWA() {
 
   vima.ev.on('messages.upsert', async ({ messages }) => {
     const mek = messages[0];
-    if (!mek || !mek.message) return;
+    if (!mek?.message) return;
 
     mek.message = getContentType(mek.message) === 'ephemeralMessage'
       ? mek.message.ephemeralMessage.message
@@ -135,9 +136,9 @@ async function connectToWA() {
     const isOwner = ownerNumber.includes(senderNumber) || isMe;
     const botNumber2 = await jidNormalizedUser(vima.user.id);
 
-    const groupMetadata = isGroup ? await vima.groupMetadata(from).catch(() => {}) : '';
-    const participants = isGroup ? groupMetadata.participants : '';
-    const groupAdmins = isGroup ? await getGroupAdmins(participants) : '';
+    const groupMetadata = isGroup ? await vima.groupMetadata(from).catch(() => {}) : {};
+    const participants = isGroup ? groupMetadata.participants || [] : [];
+    const groupAdmins = isGroup ? getGroupAdmins(participants) : [];
     const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
 
@@ -149,17 +150,15 @@ async function connectToWA() {
       );
 
       if (cmd) {
-        if (cmd.react) vima.sendMessage(from, { react: { text: cmd.react, key: mek.key } });
-
         try {
-          cmd.function(vima, mek, m, {
-            from, quoted: mek, body, command: commandName, args, q,
+          await cmd.function(vima, mek, m, {
+            from, body, command: commandName, args, q,
             isGroup, sender, senderNumber, pushname,
             isOwner, groupMetadata, participants,
             isBotAdmins, isAdmins, reply,
           });
         } catch (e) {
-          console.error("[PLUGIN ERROR]", e);
+          console.error("[COMMAND ERROR]", e);
         }
       }
     }
@@ -180,7 +179,7 @@ async function connectToWA() {
 ensureSessionFile();
 
 app.get("/", (req, res) => {
-  res.send("Hey, VIMA-MD started ✅");
+  res.send("VIMA-MD running ✅");
 });
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
