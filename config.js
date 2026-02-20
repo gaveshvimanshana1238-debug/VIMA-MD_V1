@@ -11,7 +11,7 @@ function convertToBool(text, fault = 'true') {
 module.exports = {
 
   // Session ID
-  SESSION_ID: process.env.SESSION_ID || "",
+  SESSION_ID: process.env.SESSION_ID || "Vup0CDDL#JGe8IsmEHNIPShaNXgceFnKEGHmtft7kltt6wII-ijQ",
 
   // Alive image
   ALIVE_IMG: process.env.ALIVE_IMG || "https://raw.githubusercontent.com/gaveshvimanshana1238-debug/VIMA-MD_V1/refs/heads/main/Image/20260218_134730.jpg",
