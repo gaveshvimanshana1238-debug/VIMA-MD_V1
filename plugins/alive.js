@@ -1,25 +1,20 @@
-const { cmd, commands } = require('../command');
+const { cmd } = require('../command');
 const config = require('../config');
 
 cmd({
     pattern: "alive",
-    desc: "Check bot online or no.",
+    desc: "Check if VIMA-MD is online.",
     category: "main",
     filename: __filename
 },
-async (danuwa, mek, m, {
-    from, quoted, body, isCmd, command, args, q, isGroup,
-    sender, senderNumber, botNumber2, botNumber, pushname,
-    isMe, isOwner, groupMetadata, groupName, participants,
-    groupAdmins, isBotAdmins, isAdmins, reply
-}) => {
+async (conn, mek, m, { from, reply }) => {
     try {
-        return await danuwa.sendMessage(from, {
+        await conn.sendMessage(from, {
             image: { url: config.ALIVE_IMG },
             caption: config.ALIVE_MSG
         }, { quoted: mek });
-    } catch (e) {
-        console.log(e);
-        reply(`${e}`);
+    } catch (err) {
+        console.error("Alive error:", err);
+        reply("❌ Error sending alive message.");
     }
 });
